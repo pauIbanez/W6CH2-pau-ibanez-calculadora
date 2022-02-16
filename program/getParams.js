@@ -9,7 +9,12 @@ const getParams = (url) => {
   if (paramsString === "") {
     return "Invalid params";
   }
+
   const params = paramsString.split("&");
+
+  if (params.length === 1 && params[0].split("=")[1] === undefined) {
+    return "Invalid params";
+  }
 
   params.forEach((param) => {
     const [paramName, paramValue] = param.split("=");
