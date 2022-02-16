@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const debug = require("debug")("calculator:root");
 const chalk = require("chalk");
+const { parse } = require("node-html-parser");
 
 const { getParams, transformParams } = require("./program/paramUtils");
 const calculate = require("./program/calculator");
@@ -86,23 +87,44 @@ server.on("request", (request, response) => {
     });
     if (paramsAreNumbers) {
       const results = calculate(parsedParams[0].value, parsedParams[1].value);
+      const resultsFile = path.join(dir, "results.html");
 
-      response.statusCode = 200;
-      response.write(
-        `<h1>Results:<h1>
-      <h2>Sum:</h2>
-      <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
-      <br/>
-      <h2>Substraction:</h2>
-      <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
-      <br/>
-      <h2>Multiplication:</h2>
-      <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
-      <br/>
-      <h2>Division:</h2>
-      <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>`
-      );
-      response.end();
+      fs.readFile(resultsFile, (error, resultsHtml) => {
+        if (error) {
+          debug(
+            chalk.redBright(
+              `Opps, error was thrown: ${error.name} => ${error.message}`
+            )
+          );
+          process.exit();
+        }
+
+        const htmlToInject = `
+          <h1>Results:<h1>
+          <h2>Sum:</h2>
+          <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
+          <br/>
+          <h2>Substraction:</h2>
+          <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
+          <br/>
+          <h2>Multiplication:</h2>
+          <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
+          <br/>
+          <h2>Division:</h2>
+          <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
+        `;
+
+        const tunedResultsHTML = parse(resultsHtml);
+
+        const body = tunedResultsHTML.querySelector("body");
+
+        body.set_content(htmlToInject);
+
+        response.statusCode = 200;
+        response.write(tunedResultsHTML.toString());
+        response.end();
+      });
+
       return;
     }
   }

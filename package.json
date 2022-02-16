@@ -19,6 +19,7 @@
     "commander": "^9.0.0",
     "debug": "^4.3.3",
     "dotenv": "^16.0.0",
-    "eslint-config-prettier": "^8.3.0"
+    "eslint-config-prettier": "^8.3.0",
+    "node-html-parser": "^5.2.0"
   }
 }
