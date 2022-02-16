@@ -20,6 +20,6 @@ numberTwo.addEventListener("change", () => {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const url = `${window.location}?a=${numberOneValue}&b=${numberTwoValue}`;
+  const url = `${window.location.pathname}?a=${numberOneValue}&b=${numberTwoValue}`;
   window.location = url;
 });
