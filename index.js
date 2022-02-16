@@ -26,7 +26,6 @@ server.on("request", (request, response) => {
 
   if (request.method !== "GET") {
     response.statusCode = 501;
-    response.setHeader("Content-Type", "text/plain");
     response.write("<h1>Method not implemented<h1>");
     response.end();
   }
@@ -40,7 +39,6 @@ server.on("request", (request, response) => {
   if (!request.url.includes("calculator")) {
     if (file.indexOf(dir + path.sep) !== 0) {
       response.statusCode = 403;
-      response.setHeader("Content-Type", "text/plain");
       response.write("<h1>Forbidden<h1>");
       response.end();
     }
@@ -54,9 +52,10 @@ server.on("request", (request, response) => {
     });
 
     dataStream.on("error", () => {
-      response.setHeader("Content-Type", "text/plain");
       response.statusCode = 404;
-      response.end("Not found");
+
+      response.write("<h1>Not Found<h1>");
+      response.end();
     });
   }
 });
