@@ -1,5 +1,5 @@
 const getParams = (url) => {
-  const paramsObject = {};
+  const paramsList = [];
   if (!url.includes("?")) {
     return "No params detected";
   }
@@ -19,11 +19,17 @@ const getParams = (url) => {
   params.forEach((param) => {
     const [paramName, paramValue] = param.split("=");
     if (paramValue !== undefined) {
-      paramsObject[paramName] = paramValue;
+      paramsList.push({ name: paramName, value: paramValue });
     }
   });
 
-  return paramsObject;
+  return paramsList;
 };
 
-module.exports = getParams;
+const transformParams = (params) =>
+  params.map((param) => {
+    const parsedParamValue = parseInt(param.value, 10);
+    return { ...param, value: parsedParamValue };
+  });
+
+module.exports = { getParams, transformParams };

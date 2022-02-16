@@ -2,7 +2,8 @@ require("dotenv").config();
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
-const getParams = require("./program/getParams");
+const { getParams, transformParams } = require("./program/paramUtils");
+const calculate = require("./program/calculator");
 
 const port = process.env.PORT || 4000;
 const server = http.createServer();
@@ -26,9 +27,9 @@ server.on("request", (request, response) => {
 
   if (request.method !== "GET") {
     response.statusCode = 501;
-    response.setHeader("Content-Type", "text/plain");
     response.write("<h1>Method not implemented<h1>");
     response.end();
+    return;
   }
 
   let file = path.join(dir, requestPath.replace(/\/$/, "/index.html"));
@@ -40,9 +41,9 @@ server.on("request", (request, response) => {
   if (!request.url.includes("calculator")) {
     if (file.indexOf(dir + path.sep) !== 0) {
       response.statusCode = 403;
-      response.setHeader("Content-Type", "text/plain");
       response.write("<h1>Forbidden<h1>");
       response.end();
+      return;
     }
 
     const type = mime[path.extname(file).slice(1)] || "text/plain";
@@ -54,11 +55,60 @@ server.on("request", (request, response) => {
     });
 
     dataStream.on("error", () => {
-      response.setHeader("Content-Type", "text/plain");
       response.statusCode = 404;
-      response.end("Not found");
+
+      response.write("<h1>Not Found<h1>");
+      response.end();
     });
+
+    return;
   }
+
+  let validParams = true;
+  if (typeof params !== "object" || params.length < 2) {
+    validParams = false;
+  }
+
+  if (validParams) {
+    const wantedParams = params.slice(0, 2);
+    const parsedParams = transformParams(wantedParams);
+
+    let paramsAreNumbers = true;
+
+    parsedParams.forEach(({ value: paramValue }) => {
+      if (Number.isNaN(paramValue)) {
+        paramsAreNumbers = false;
+      }
+    });
+    if (paramsAreNumbers) {
+      const results = calculate(parsedParams[0].value, parsedParams[1].value);
+
+      response.statusCode = 200;
+      response.write(
+        `<h1>Results:<h1>
+      <h2>Sum:</h2>
+      <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
+      <br/>
+      <h2>Substraction:</h2>
+      <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
+      <br/>
+      <h2>Multiplication:</h2>
+      <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
+      <br/>
+      <h2>Division:</h2>
+      <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>`
+      );
+      response.end();
+      return;
+    }
+  }
+  const invalidParamsFile = path.join(dir, "invalidNumber.html");
+  const invalidParamsFileDataStream = fs.createReadStream(invalidParamsFile);
+
+  invalidParamsFileDataStream.on("open", () => {
+    response.setHeader("Content-Type", "text/html");
+    invalidParamsFileDataStream.pipe(response);
+  });
 });
 
 server.listen(port);
