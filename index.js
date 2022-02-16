@@ -118,3 +118,9 @@ server.on("request", (request, response) => {
 server.listen(port, () => {
   debug(chalk.yellowBright(`Server listening on port ${port}`));
 });
+
+server.on("error", (error) => {
+  debug(
+    chalk.redBright(`Opps, error was thrown: ${error.name} => ${error.message}`)
+  );
+});
