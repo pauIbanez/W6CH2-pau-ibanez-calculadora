@@ -1,7 +1,6 @@
 const form = document.querySelector("form");
 const numberOne = document.querySelector("#n1");
 const numberTwo = document.querySelector("#n2");
-const button = document.querySelector("button");
 
 let numberOneValue = 0;
 numberOne.value = numberOneValue;
