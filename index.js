@@ -3,6 +3,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { getParams, transformParams } = require("./program/paramUtils");
+const calculate = require("./program/calculator");
 
 const port = process.env.PORT || 4000;
 const server = http.createServer();
@@ -59,24 +60,32 @@ server.on("request", (request, response) => {
       response.write("<h1>Not Found<h1>");
       response.end();
     });
+
+    return;
   }
-  const wantedParams = params.slice(0, 2);
-  const parsedParams = transformParams(wantedParams);
 
   let validParams = true;
-
-  parsedParams.forEach(({ value: paramValue }) => {
-    if (Number.isNaN(paramValue)) {
-      validParams = false;
-    }
-  });
+  if (typeof params !== "object" || params.length < 2) {
+    validParams = false;
+  }
 
   if (validParams) {
-    const results = calculate(parsedParams[0].value, parsedParams[1].value);
+    const wantedParams = params.slice(0, 2);
+    const parsedParams = transformParams(wantedParams);
 
-    response.statusCode = 404;
-    response.write(
-      `<h1>Results:<h1>
+    let paramsAreNumbers = true;
+
+    parsedParams.forEach(({ value: paramValue }) => {
+      if (Number.isNaN(paramValue)) {
+        paramsAreNumbers = false;
+      }
+    });
+    if (paramsAreNumbers) {
+      const results = calculate(parsedParams[0].value, parsedParams[1].value);
+
+      response.statusCode = 200;
+      response.write(
+        `<h1>Results:<h1>
       <h2>Sum:</h2>
       <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
       <br/>
@@ -88,17 +97,18 @@ server.on("request", (request, response) => {
       <br/>
       <h2>Division:</h2>
       <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>`
-    );
-    response.end();
-  } else {
-    const invalidParamsFile = path.join(dir, "invalidNumber.html");
-    const invalidParamsFileDataStream = fs.createReadStream(invalidParamsFile);
-
-    invalidParamsFileDataStream.on("open", () => {
-      response.setHeader("Content-Type", "text/html");
-      invalidParamsFileDataStream.pipe(response);
-    });
+      );
+      response.end();
+      return;
+    }
   }
+  const invalidParamsFile = path.join(dir, "invalidNumber.html");
+  const invalidParamsFileDataStream = fs.createReadStream(invalidParamsFile);
+
+  invalidParamsFileDataStream.on("open", () => {
+    response.setHeader("Content-Type", "text/html");
+    invalidParamsFileDataStream.pipe(response);
+  });
 });
 
 server.listen(port);
