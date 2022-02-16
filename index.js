@@ -2,10 +2,15 @@ require("dotenv").config();
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const debug = require("debug")("calculator:root");
+const chalk = require("chalk");
+const { parse } = require("node-html-parser");
+
 const { getParams, transformParams } = require("./program/paramUtils");
 const calculate = require("./program/calculator");
+const { port: passedPort } = require("./program/getArgs");
 
-const port = process.env.PORT || 4000;
+const port = passedPort || process.env.PORT || 4000;
 const server = http.createServer();
 
 const dir = path.join(__dirname, "public");
@@ -82,23 +87,52 @@ server.on("request", (request, response) => {
     });
     if (paramsAreNumbers) {
       const results = calculate(parsedParams[0].value, parsedParams[1].value);
+      const resultsFile = path.join(dir, "results.html");
 
-      response.statusCode = 200;
-      response.write(
-        `<h1>Results:<h1>
-      <h2>Sum:</h2>
-      <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
-      <br/>
-      <h2>Substraction:</h2>
-      <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
-      <br/>
-      <h2>Multiplication:</h2>
-      <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
-      <br/>
-      <h2>Division:</h2>
-      <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>`
-      );
-      response.end();
+      fs.readFile(resultsFile, (error, resultsHtml) => {
+        if (error) {
+          debug(
+            chalk.redBright(
+              `Opps, error was thrown: ${error.name} => ${error.message}`
+            )
+          );
+          process.exit();
+        }
+
+        const htmlToInject = `
+          <h1>Results:<h1>
+          <h2>Sum:</h2>
+          <p>${parsedParams[0].value} + ${
+          parsedParams[1].value
+        } = ${results[0].toFixed(2)}</p>
+          <br/>
+          <h2>Substraction:</h2>
+          <p>${parsedParams[0].value} - ${
+          parsedParams[1].value
+        } = ${results[1].toFixed(2)}</p>
+          <br/>
+          <h2>Multiplication:</h2>
+          <p>${parsedParams[0].value} * ${
+          parsedParams[1].value
+        } = ${results[2].toFixed(2)}</p>
+          <br/>
+          <h2>Division:</h2>
+          <p>${parsedParams[0].value} / ${
+          parsedParams[1].value
+        } = ${results[3].toFixed(2)}</p>
+        `;
+
+        const tunedResultsHTML = parse(resultsHtml);
+
+        const body = tunedResultsHTML.querySelector("body");
+
+        body.set_content(htmlToInject);
+
+        response.statusCode = 200;
+        response.write(tunedResultsHTML.toString());
+        response.end();
+      });
+
       return;
     }
   }
@@ -111,4 +145,12 @@ server.on("request", (request, response) => {
   });
 });
 
-server.listen(port);
+server.listen(port, () => {
+  debug(chalk.yellowBright(`Server listening on port ${port}`));
+});
+
+server.on("error", (error) => {
+  debug(
+    chalk.redBright(`Opps, error was thrown: ${error.name} => ${error.message}`)
+  );
+});
