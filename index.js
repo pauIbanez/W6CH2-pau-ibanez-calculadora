@@ -102,16 +102,24 @@ server.on("request", (request, response) => {
         const htmlToInject = `
           <h1>Results:<h1>
           <h2>Sum:</h2>
-          <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
+          <p>${parsedParams[0].value} + ${
+          parsedParams[1].value
+        } = ${results[0].toFixed(2)}</p>
           <br/>
           <h2>Substraction:</h2>
-          <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
+          <p>${parsedParams[0].value} - ${
+          parsedParams[1].value
+        } = ${results[1].toFixed(2)}</p>
           <br/>
           <h2>Multiplication:</h2>
-          <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
+          <p>${parsedParams[0].value} * ${
+          parsedParams[1].value
+        } = ${results[2].toFixed(2)}</p>
           <br/>
           <h2>Division:</h2>
-          <p>${parsedParams[0].value} / ${parsedParams[1].value} = ${results[3]}</p>
+          <p>${parsedParams[0].value} / ${
+          parsedParams[1].value
+        } = ${results[3].toFixed(2)}</p>
         `;
 
         const tunedResultsHTML = parse(resultsHtml);
