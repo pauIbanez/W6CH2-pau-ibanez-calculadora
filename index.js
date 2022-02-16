@@ -2,10 +2,14 @@ require("dotenv").config();
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const debug = require("debug")("calculator:root");
+const chalk = require("chalk");
+
 const { getParams, transformParams } = require("./program/paramUtils");
 const calculate = require("./program/calculator");
+const { port: passedPort } = require("./program/getArgs");
 
-const port = process.env.PORT || 4000;
+const port = passedPort || process.env.PORT || 4000;
 const server = http.createServer();
 
 const dir = path.join(__dirname, "public");
@@ -111,4 +115,6 @@ server.on("request", (request, response) => {
   });
 });
 
-server.listen(port);
+server.listen(port, () => {
+  debug(chalk.yellowBright(`Server listening on port ${port}`));
+});
